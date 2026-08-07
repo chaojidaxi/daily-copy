@@ -757,7 +757,7 @@ async function loadData() {
     updateDurationButtons();
 
     updateTotalCount();
-    document.getElementById('updateTime').textContent = allData.updated || '-';
+    updateCategoryUpdateTime();
 
     render();
   } catch (e) {
@@ -828,6 +828,15 @@ function updateTotalCount() {
     }
   });
   document.getElementById('totalCopies').textContent = '30s·' + total30s + '条 / 60s·' + total60s + '条';
+}
+
+function updateCategoryUpdateTime() {
+  var updated = allData.updated || '-';
+  var catUpdated = (allData.category_updated || {})[currentCategory];
+  if (catUpdated) {
+    updated = catUpdated + '（本类目）';
+  }
+  document.getElementById('updateTime').textContent = updated;
 }
 
 // 兼容旧数据（dayData 直接是 groups，没有 duration 层）
@@ -1125,6 +1134,7 @@ document.querySelectorAll('.category-btn').forEach(function(btn) {
     updateCategoryButtons();
     updateDateSelect();
     updateTotalCount();
+    updateCategoryUpdateTime();
     render();
   });
 });
