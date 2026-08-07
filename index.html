@@ -146,6 +146,21 @@ body {
 .duration-btn:hover { color: var(--text); }
 .duration-btn.active { background: #fff; color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 
+.category-group { display: flex; gap: 2px; background: var(--border); border-radius: 20px; padding: 2px; }
+.category-btn {
+  padding: 6px 18px;
+  border: none;
+  border-radius: 18px;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-sub);
+  cursor: pointer;
+  transition: all 0.25s;
+}
+.category-btn:hover { color: var(--text); }
+.category-btn.active { background: var(--text); color: #fff; }
+
 .search-box {
   min-width: 180px;
   position: relative;
@@ -522,6 +537,7 @@ button.copy-mini-blue.copied { color: #fff; background: #34c759; }
   .hero .meta { gap: 20px; font-size: 12px; }
   .controls { padding: 10px 12px; gap: 8px; }
   .filter-btn { padding: 6px 14px; font-size: 12px; }
+  .category-btn { padding: 6px 14px; font-size: 12px; }
   .search-box { min-width: 120px; }
   .content { padding: 20px 12px 60px; }
   .card { padding: 20px; }
@@ -611,6 +627,10 @@ button.copy-mini-blue.copied { color: #fff; background: #34c759; }
 
 <div class="controls">
   <div class="controls-top">
+    <div class="category-group" id="categoryGroup">
+      <button class="category-btn active" data-category="女装">女装</button>
+      <button class="category-btn" data-category="女鞋">女鞋</button>
+    </div>
     <select class="date-select" id="dateSelect"></select>
     <div class="duration-group">
       <button class="duration-btn active" data-duration="30s">30秒</button>
@@ -662,13 +682,14 @@ button.copy-mini-blue.copied { color: #fff; background: #34c759; }
 
 <div class="footer">
   <p>一批档口短视频文案 · 每日自动更新</p>
-  <p>广州十三行 / 杭州意法 · 女装一批</p>
+  <p>女装一批 / 女鞋一批 · 档口实拍口播</p>
 </div>
 
 <div class="toast" id="toast">已复制完整文案，可直接使用</div>
 
 <script>
 let allData = null;
+let currentCategory = '女装';
 let currentDate = '';
 let currentRole = 'all';
 let currentDuration = '30s';
@@ -682,31 +703,51 @@ const roleMap = {
   '导购小妹': { key: 'guide', label: '导购小妹' }
 };
 
+// 获取当前类目的数据（兼容旧格式：无 categories 字段时按女装处理）
+function getCategoryData() {
+  if (!allData) return {};
+  var cats = allData.categories;
+  if (cats && cats.length > 0) {
+    return allData.data[currentCategory] || {};
+  }
+  // 旧格式：data 直接是 {date: {dur: {...}}}
+  return allData.data || {};
+}
+
+// 获取当前类目下所有日期
+function getCategoryDates() {
+  var catData = getCategoryData();
+  return Object.keys(catData).sort();
+}
+
 async function loadData() {
   try {
     const res = await fetch('data.json?v=' + Date.now());
     allData = await res.json();
 
-    const select = document.getElementById('dateSelect');
-    select.innerHTML = '';
-    const dates = allData.dates || [];
-    const sortedDates = [...dates].reverse();
+    // 兼容旧格式：无 categories 字段
+    if (!allData.categories) {
+      allData.categories = ['女装'];
+    }
 
-    // 全部日期选项
-    var optAll = document.createElement('option');
-    optAll.value = 'all';
-    optAll.textContent = '全部日期';
-    select.appendChild(optAll);
-
-    sortedDates.forEach(d => {
-      const opt = document.createElement('option');
-      opt.value = d;
-      opt.textContent = d;
-      select.appendChild(opt);
+    // 显示/隐藏类目按钮
+    var catBtns = document.querySelectorAll('.category-btn');
+    catBtns.forEach(function(btn) {
+      var cat = btn.getAttribute('data-category');
+      if (allData.categories.indexOf(cat) === -1) {
+        btn.style.display = 'none';
+      } else {
+        btn.style.display = '';
+      }
     });
 
-    currentDate = 'all';
-    select.value = 'all';
+    // 默认选第一个有数据的类目
+    if (allData.categories.indexOf(currentCategory) === -1) {
+      currentCategory = allData.categories[0];
+    }
+    updateCategoryButtons();
+
+    updateDateSelect();
 
     // 自动选有数据的时长版本
     var availDurations = allData.durations || ['30s'];
@@ -722,6 +763,39 @@ async function loadData() {
   } catch (e) {
     document.getElementById('content').innerHTML = '<div class="empty"><p>数据加载失败</p><p>请稍后刷新重试</p></div>';
   }
+}
+
+function updateCategoryButtons() {
+  document.querySelectorAll('.category-btn').forEach(function(btn) {
+    if (btn.getAttribute('data-category') === currentCategory) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+}
+
+function updateDateSelect() {
+  const select = document.getElementById('dateSelect');
+  select.innerHTML = '';
+  var dates = getCategoryDates();
+  var sortedDates = dates.slice().reverse();
+
+  // 全部日期选项
+  var optAll = document.createElement('option');
+  optAll.value = 'all';
+  optAll.textContent = '全部日期';
+  select.appendChild(optAll);
+
+  sortedDates.forEach(function(d) {
+    const opt = document.createElement('option');
+    opt.value = d;
+    opt.textContent = d;
+    select.appendChild(opt);
+  });
+
+  currentDate = 'all';
+  select.value = 'all';
 }
 
 function updateDurationButtons() {
@@ -743,9 +817,9 @@ function updateDurationButtons() {
 
 function updateTotalCount() {
   var total30s = 0, total60s = 0;
-  var dates = allData.dates || [];
-  dates.forEach(function(d) {
-    var dayData = allData.data[d] || {};
+  var catData = getCategoryData();
+  Object.keys(catData).forEach(function(d) {
+    var dayData = catData[d] || {};
     if (dayData['30s']) {
       Object.values(dayData['30s']).forEach(function(arr) { total30s += arr.length; });
     }
@@ -767,7 +841,8 @@ function getCompatData(dayData) {
 
 function render() {
   const container = document.getElementById('content');
-  if (!allData || (currentDate !== 'all' && !allData.data[currentDate])) {
+  var catData = getCategoryData();
+  if (!allData || (currentDate !== 'all' && !catData[currentDate])) {
     container.innerHTML = '<div class="empty"><p>暂无数据</p></div>';
     document.getElementById('pagination').innerHTML = '';
     return;
@@ -778,7 +853,7 @@ function render() {
   // 全部日期 vs 单日期
   var datesToShow = [];
   if (currentDate === 'all') {
-    datesToShow = (allData.dates || []).slice().reverse(); // 新→旧
+    datesToShow = getCategoryDates().reverse(); // 新→旧
   } else {
     datesToShow = [currentDate];
   }
@@ -787,7 +862,7 @@ function render() {
   var allItems = [];
 
   datesToShow.forEach(function(dateStr) {
-    var dayData = allData.data[dateStr] || {};
+    var dayData = catData[dateStr] || {};
     var durData = dayData[currentDuration] || getCompatData(dayData);
 
     roleOrder.forEach(function(roleName) {
@@ -1041,6 +1116,17 @@ document.getElementById('dateSelect').addEventListener('change', function(e) {
   currentDate = e.target.value;
   currentPage = 1;
   render();
+});
+
+document.querySelectorAll('.category-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    currentCategory = btn.getAttribute('data-category');
+    currentPage = 1;
+    updateCategoryButtons();
+    updateDateSelect();
+    updateTotalCount();
+    render();
+  });
 });
 
 document.querySelectorAll('.duration-btn').forEach(function(btn) {
