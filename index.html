@@ -530,21 +530,48 @@ button.copy-mini-blue.copied { color: #fff; background: #34c759; }
 
 /* Mobile */
 @media (max-width: 600px) {
-  .hero { padding: 48px 16px 32px; }
-  .hero h1 { font-size: 28px; }
-  .hero .subtitle { font-size: 14px; }
-.hero .author { font-size: 13px; margin-bottom: 20px; }
-  .hero .meta { gap: 20px; font-size: 12px; }
-  .controls { padding: 10px 12px; gap: 8px; }
-  .filter-btn { padding: 6px 14px; font-size: 12px; }
-  .category-btn { padding: 6px 14px; font-size: 12px; }
-  .search-box { min-width: 120px; }
-  .content { padding: 20px 12px 60px; }
-  .card { padding: 20px; }
-  .card-title { font-size: 17px; }
-  .block-label { width: 40px; font-size: 10px; }
-  .block-content { font-size: 14px; padding-left: 10px; }
-  .group-header { font-size: 19px; margin: 28px 0 14px; }
+  .hero { padding: 40px 16px 28px; }
+  .hero h1 { font-size: 26px; }
+  .hero .subtitle { font-size: 13px; }
+  .hero .author { font-size: 12px; margin-bottom: 16px; }
+  .hero .meta { flex-direction: column; gap: 6px; font-size: 12px; }
+
+  /* Controls: stack neatly */
+  .controls { padding: 10px 12px; gap: 8px; flex-direction: column; }
+  .controls-top { gap: 8px; flex-wrap: wrap; justify-content: center; }
+  .category-group { order: -1; }
+  .category-btn { padding: 5px 14px; font-size: 12px; }
+  .date-select { padding: 6px 30px 6px 12px; font-size: 12px; }
+  .duration-btn { padding: 5px 12px; font-size: 12px; }
+  .filter-btn { padding: 5px 12px; font-size: 12px; }
+  .filter-group { justify-content: center; }
+  .search-box { min-width: 0; width: 100%; }
+  .search-box input { padding: 7px 12px 7px 32px; font-size: 13px; }
+
+  /* Content & Cards */
+  .content { padding: 16px 10px 60px; }
+  .card { padding: 16px; margin-bottom: 12px; }
+
+  /* Card header: allow badges to wrap */
+  .card-header { flex-wrap: wrap; gap: 6px; padding-bottom: 14px; margin-bottom: 14px; }
+  .card-index { width: 24px; height: 24px; font-size: 11px; }
+  .role-badge { font-size: 10px; padding: 3px 10px; }
+  .date-badge { font-size: 10px; padding: 3px 10px; }
+  .hook-badge { font-size: 10px; padding: 3px 10px; }
+
+  .card-title { font-size: 16px; margin-bottom: 14px; }
+  .group-header { font-size: 18px; margin: 24px 0 12px; }
+
+  /* Block content */
+  .block-label { width: 36px; font-size: 10px; }
+  .block-content { font-size: 14px; padding-left: 8px; }
+  .block-cover .block-content, .block-hook .block-content { padding: 10px 12px; font-size: 14px; }
+  .block-script .block-content { font-size: 14px; }
+
+  /* Copy buttons */
+  button.copy-mini { font-size: 10px; padding: 3px 8px; }
+  .tags-row { flex-wrap: wrap; gap: 8px; }
+  .card-tags .tag { font-size: 11px; padding: 3px 10px; }
 }
 
 /* Pagination */
