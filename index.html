@@ -929,13 +929,12 @@ function render() {
     groupItems.forEach(function(item, idx) {
       var copy = item.copy;
       var hookType = copy.hook_type || '';
-      var showDate = datesToShow.length > 1;
 
       html += '<div class="card" style="animation-delay:' + (idx * 0.04) + 's" data-card>' +
         '<div class="card-header">' +
           '<div class="card-index">' + (startIdx + groupItems.indexOf(item) + 1) + '</div>' +
           '<span class="role-badge ' + item.roleKey + '">' + item.roleName + '</span>' +
-          (showDate ? '<span class="date-badge">' + escapeHtml(item.dateStr) + '</span>' : '') +
+          '<span class="date-badge">' + escapeHtml(item.dateStr) + '</span>' +
           (hookType ? '<span class="hook-badge">Hook · ' + escapeHtml(hookType) + '</span>' : '') +
         '</div>' +
         '<div class="title-row">' +
