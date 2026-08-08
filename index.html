@@ -638,6 +638,105 @@ button.copy-mini-blue.copied { color: #fff; background: #34c759; }
   box-shadow: 0 4px 16px rgba(0,0,0,0.2);
 }
 .toast.show { transform: translateX(-50%) translateY(0); }
+
+/* ===== Visit Stats ===== */
+.visit-stats {
+  max-width: 720px;
+  margin: 0 auto 60px;
+  padding: 28px;
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.visit-stats-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--text-light);
+  text-transform: uppercase;
+  margin-bottom: 22px;
+  text-align: center;
+}
+.visit-stats-grid {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  margin-bottom: 28px;
+}
+.visit-stat-item { text-align: center; }
+.visit-stat-num {
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -1px;
+  background: linear-gradient(135deg, #1d1d1f 0%, #434343 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1.2;
+}
+.visit-stat-label {
+  font-size: 12px;
+  color: var(--text-light);
+  font-weight: 500;
+  margin-top: 4px;
+}
+.visit-chart-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-sub);
+  margin-bottom: 14px;
+  text-align: center;
+}
+.visit-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 100px;
+  padding: 0 4px;
+}
+.visit-bar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  height: 100%;
+  justify-content: flex-end;
+}
+.visit-bar-count {
+  font-size: 11px;
+  color: var(--text-sub);
+  font-weight: 600;
+}
+.visit-bar-fill {
+  width: 100%;
+  max-width: 32px;
+  border-radius: 6px 6px 0 0;
+  background: linear-gradient(180deg, #0071e3 0%, #5aa8ff 100%);
+  min-height: 4px;
+  transition: height 0.6s cubic-bezier(0.25,0.46,0.45,0.94);
+}
+.visit-bar-label {
+  font-size: 10px;
+  color: var(--text-light);
+  font-weight: 500;
+  white-space: nowrap;
+}
+.visit-note {
+  font-size: 11px;
+  color: var(--text-light);
+  text-align: center;
+  margin-top: 16px;
+  line-height: 1.5;
+}
+@media (max-width: 600px) {
+  .visit-stats { padding: 20px; margin: 0 auto 40px; }
+  .visit-stats-grid { gap: 20px; }
+  .visit-stat-num { font-size: 24px; }
+  .visit-chart { height: 80px; gap: 3px; }
+  .visit-bar-fill { max-width: 22px; }
+  .visit-bar-count { font-size: 10px; }
+  .visit-bar-label { font-size: 9px; }
+}
 </style>
 </head>
 <body>
@@ -707,6 +806,34 @@ button.copy-mini-blue.copied { color: #fff; background: #34c759; }
   </div>
 </div>
 
+<!-- Hidden busuanzi data elements -->
+<div style="display:none">
+  <span id="busuanzi_container_site_pv"><span id="busuanzi_value_site_pv">0</span></span>
+  <span id="busuanzi_container_site_uv"><span id="busuanzi_value_site_uv">0</span></span>
+</div>
+
+<!-- Visit Stats Card -->
+<div class="visit-stats" id="visitStats">
+  <div class="visit-stats-title">📊 访问统计</div>
+  <div class="visit-stats-grid">
+    <div class="visit-stat-item">
+      <div class="visit-stat-num" id="displayPV">--</div>
+      <div class="visit-stat-label">总访问量</div>
+    </div>
+    <div class="visit-stat-item">
+      <div class="visit-stat-num" id="displayUV">--</div>
+      <div class="visit-stat-label">访客数</div>
+    </div>
+    <div class="visit-stat-item">
+      <div class="visit-stat-num" id="todayLocal">--</div>
+      <div class="visit-stat-label">今日(本机)</div>
+    </div>
+  </div>
+  <div class="visit-chart-title">最近 7 天访问记录</div>
+  <div class="visit-chart" id="visitChart"></div>
+  <div class="visit-note">总访问量 / 访客数为全站统计 · 7天记录为本机访问</div>
+</div>
+
 <div class="footer">
   <p>一批档口短视频文案 · 每日自动更新</p>
   <p>女装一批 / 女鞋一批 · 档口实拍口播</p>
@@ -714,6 +841,9 @@ button.copy-mini-blue.copied { color: #fff; background: #34c759; }
 </div>
 
 <div class="toast" id="toast">已复制完整文案，可直接使用</div>
+
+<!-- busuanzi -->
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
 
 <script>
 let allData = null;
@@ -1206,6 +1336,124 @@ function bindPagination(el) {
 }
 bindPagination(document.getElementById('pagination'));
 bindPagination(document.getElementById('paginationTop'));
+
+// ===== Visit Tracking =====
+function fmtVisitDate(d) {
+  var y = d.getFullYear();
+  var m = String(d.getMonth() + 1).padStart(2, '0');
+  var day = String(d.getDate()).padStart(2, '0');
+  return y + '-' + m + '-' + day;
+}
+
+function getLast7Days() {
+  var days = [];
+  for (var i = 6; i >= 0; i--) {
+    var d = new Date();
+    d.setDate(d.getDate() - i);
+    days.push(fmtVisitDate(d));
+  }
+  return days;
+}
+
+function shortVisitDate(dateStr) {
+  var parts = dateStr.split('-');
+  return parts[1] + '/' + parts[2];
+}
+
+// localStorage tracking (per-device, one count per session per day)
+function trackLocalVisit() {
+  var today = fmtVisitDate(new Date());
+  var key = 'daily-copy-visits';
+  var sessionKey = 'daily-copy-session-day';
+
+  // Already counted this session today?
+  try {
+    if (sessionStorage.getItem(sessionKey) === today) {
+      var existing = {};
+      try { existing = JSON.parse(localStorage.getItem(key) || '{}'); } catch (e) {}
+      return existing;
+    }
+  } catch (e) {}
+
+  var data = {};
+  try { data = JSON.parse(localStorage.getItem(key) || '{}'); } catch (e) { data = {}; }
+  if (!data[today]) data[today] = 0;
+  data[today]++;
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+    sessionStorage.setItem(sessionKey, today);
+  } catch (e) {}
+  return data;
+}
+
+function getLocal7Days() {
+  var days = getLast7Days();
+  var key = 'daily-copy-visits';
+  var data = {};
+  try { data = JSON.parse(localStorage.getItem(key) || '{}'); } catch (e) {}
+  return days.map(function(d) {
+    return { date: d, count: data[d] || 0 };
+  });
+}
+
+// Check busuanzi values and update display
+function checkBusuanzi() {
+  var pvEl = document.getElementById('busuanzi_value_site_pv');
+  var uvEl = document.getElementById('busuanzi_value_site_uv');
+  var pv = pvEl ? pvEl.textContent : '';
+  var uv = uvEl ? uvEl.textContent : '';
+  if (pv && pv !== '0' && pv !== '') {
+    document.getElementById('displayPV').textContent = pv;
+    document.getElementById('displayUV').textContent = uv || '0';
+    return true;
+  }
+  return false;
+}
+
+// Render 7-day bar chart
+function renderVisitChart(data7d) {
+  var chart = document.getElementById('visitChart');
+  if (!chart) return;
+  var maxCount = Math.max.apply(null, data7d.map(function(d) { return d.count; }));
+  if (maxCount === 0) maxCount = 1;
+  var html = '';
+  data7d.forEach(function(d) {
+    var heightPct = Math.max(4, (d.count / maxCount) * 100);
+    html += '<div class="visit-bar">' +
+      '<div class="visit-bar-count">' + d.count + '</div>' +
+      '<div class="visit-bar-fill" style="height:' + heightPct + '%"></div>' +
+      '<div class="visit-bar-label">' + shortVisitDate(d.date) + '</div>' +
+    '</div>';
+  });
+  chart.innerHTML = html;
+}
+
+// Initialize visit stats
+function initVisitStats() {
+  // Track local visit
+  var localData = trackLocalVisit();
+  var today = fmtVisitDate(new Date());
+  document.getElementById('todayLocal').textContent = localData[today] || 1;
+
+  // Render 7-day chart from localStorage
+  var data7d = getLocal7Days();
+  renderVisitChart(data7d);
+
+  // Poll busuanzi values (every 500ms, up to 10s)
+  var attempts = 0;
+  var timer = setInterval(function() {
+    attempts++;
+    if (checkBusuanzi() || attempts > 20) {
+      clearInterval(timer);
+      if (attempts > 20) {
+        document.getElementById('displayPV').textContent = '暂无';
+        document.getElementById('displayUV').textContent = '暂无';
+      }
+    }
+  }, 500);
+}
+
+initVisitStats();
 
 loadData();
 </script>
